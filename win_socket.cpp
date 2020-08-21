@@ -17,7 +17,10 @@ int main(){
     sockAddr.sin_family = PF_INET;
     sockAddr.sin_addr.s_addr = inet_addr("169.254.224.108");
     sockAddr.sin_port = htons(8990);
-    connect(sock, (SOCKADDR*)&sockAddr, sizeof(SOCKADDR));
+    
+    if( connect(sock, (SOCKADDR*)&sockAddr, sizeof(SOCKADDR)) == -1 ){
+        cout << "connect failed" << endl;
+    }
 
     //接收服务器传回的数据
     char szBuffer[MAXBYTE] = {0};
