@@ -128,6 +128,8 @@ void main(void){
 
         for(i=0;i<bytes_read;i++)    /*printing only the received characters*/
         printf("%c",read_buffer[i]);
+        unsigned char msg[] = "we have received the data";
+        write(serial_port, msg, sizeof(msg));
 
         printf("\n +----------------------------------+\n\n\n");
     }
