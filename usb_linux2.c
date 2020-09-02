@@ -47,6 +47,7 @@
 /*-------------------------------------------------------------*/
 
 #include <stdio.h>
+#include <string.h>
 #include <fcntl.h>   /* File Control Definitions           */
 #include <termios.h> /* POSIX Terminal Control Definitions */
 #include <unistd.h>  /* UNIX Standard Definitions      */ 
@@ -73,7 +74,7 @@ void main(void){
     if(fd == -1)                        /* Error Checking */
         printf("\n  Error! in Opening ttyAMA0  ");
     else
-        printf("\n  ttyUSB0 Opened Successfully ");
+        printf("\n  ttyAMA0 Opened Successfully ");
 
 
     /*---------- Setting the Attributes of the serial port using termios structure --------- */
@@ -114,22 +115,36 @@ void main(void){
         /*------------------------------- Read data from serial port -----------------------------*/
 
     
+    int length = 0;
     
     while(1){
         tcflush(fd, TCIFLUSH);   /* Discards old data in the rx buffer            */
 
-        char read_buffer[1024];   /* Buffer to store the data received              */
+        char read_buffer[32];   /* Buffer to store the data received              */
+        char read_result[1024];
         int  bytes_read = 0;    /* Number of bytes read by the read() system call */
-        int i = 0;
-        bytes_read = read(fd,&read_buffer,sizeof(read_buffer)); /* Read the data                   */
+        length_read = read(fd,&read_buffer,sizeof(read_buffer)); /* Read the data                   */
         
-        printf("\n\n  Bytes Rxed %d", bytes_read); /* Print the number of bytes read */
+        printf("\n\n  Bytes Rxed %d", length_read); /* Print the number of bytes read */
         printf("\n\n  ");
+        
+        length += length_read;
+        strcat(read_result,read_buffer);
+        printf("After joining together:\n");
 
-        for(i=0;i<bytes_read;i++)    /*printing only the received characters*/
-        printf("%c",read_buffer[i]);
-        unsigned char msg[] = "we have received the data";
-        write(fd, msg, sizeof(msg));
+        for(int i=0;i<length;i++){
+            printf("%c",read_result);
+        }
+
+
+        if( length_read < 8 ){
+            unsigned char msg[] = "we have received the data";
+            write(fd, msg, sizeof(msg));
+        }
+
+        // for(int i=0;i<bytes_read;i++)    /*printing only the received characters*/
+        // printf("%c",read_buffer[i]);
+        
 
         printf("\n +----------------------------------+\n\n\n");
     }
@@ -137,3 +152,4 @@ void main(void){
     close(fd); /* Close the serial port */
 
 }
+
