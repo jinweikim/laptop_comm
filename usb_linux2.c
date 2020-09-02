@@ -102,7 +102,7 @@ void main(void){
     SerialPortSettings.c_oflag &= ~OPOST;/*No Output Processing*/
     
     /* Setting Time outs */
-    SerialPortSettings.c_cc[VMIN] = 10; /* Read at least 10 characters */
+    SerialPortSettings.c_cc[VMIN] = 2; /* Read at least 10 characters */
     SerialPortSettings.c_cc[VTIME] = 0; /* Wait indefinetly   */
 
 
@@ -118,10 +118,10 @@ void main(void){
     while(1){
         tcflush(fd, TCIFLUSH);   /* Discards old data in the rx buffer            */
 
-        char read_buffer[256];   /* Buffer to store the data received              */
+        char read_buffer[1024];   /* Buffer to store the data received              */
         int  bytes_read = 0;    /* Number of bytes read by the read() system call */
         int i = 0;
-        bytes_read = read(fd,&read_buffer,256); /* Read the data                   */
+        bytes_read = read(fd,&read_buffer,sizeof(read_buffer)); /* Read the data                   */
         
         printf("\n\n  Bytes Rxed %d", bytes_read); /* Print the number of bytes read */
         printf("\n\n  ");
