@@ -83,8 +83,8 @@ void main(void){
     tcgetattr(fd, &SerialPortSettings); /* Get the current attributes of the Serial port */
 
     /* Setting the Baud rate */
-    cfsetispeed(&SerialPortSettings,B115200); /* Set Read  Speed as 9600                       */
-    cfsetospeed(&SerialPortSettings,B115200); /* Set Write Speed as 9600                       */
+    cfsetispeed(&SerialPortSettings,B115200); /* Set Read  Speed as 115200                      */
+    cfsetospeed(&SerialPortSettings,B115200); /* Set Write Speed as 115200                     */
 
     /* 8N1 Mode */
     SerialPortSettings.c_cflag &= ~PARENB;   /* Disables the Parity Enable bit(PARENB),So No Parity   */
@@ -118,18 +118,18 @@ void main(void){
     while(1){
         tcflush(fd, TCIFLUSH);   /* Discards old data in the rx buffer            */
 
-        char read_buffer[32];   /* Buffer to store the data received              */
+        char read_buffer[256];   /* Buffer to store the data received              */
         int  bytes_read = 0;    /* Number of bytes read by the read() system call */
         int i = 0;
-        bytes_read = read(fd,&read_buffer,32); /* Read the data                   */
+        bytes_read = read(fd,&read_buffer,256); /* Read the data                   */
         
-        printf("\n\n  Bytes Rxed -%d", bytes_read); /* Print the number of bytes read */
+        printf("\n\n  Bytes Rxed %d", bytes_read); /* Print the number of bytes read */
         printf("\n\n  ");
 
         for(i=0;i<bytes_read;i++)    /*printing only the received characters*/
         printf("%c",read_buffer[i]);
         unsigned char msg[] = "we have received the data";
-        write(serial_port, msg, sizeof(msg));
+        write(fd, msg, sizeof(msg));
 
         printf("\n +----------------------------------+\n\n\n");
     }
