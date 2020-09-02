@@ -122,7 +122,7 @@ void main(void){
 
         char read_buffer[32];   /* Buffer to store the data received              */
         char read_result[1024];
-        int  bytes_read = 0;    /* Number of bytes read by the read() system call */
+        int  length_read = 0;    /* Number of bytes read by the read() system call */
         length_read = read(fd,&read_buffer,sizeof(read_buffer)); /* Read the data                   */
         
         printf("\n\n  Bytes Rxed %d", length_read); /* Print the number of bytes read */
@@ -133,11 +133,12 @@ void main(void){
         printf("After joining together:\n");
 
         for(int i=0;i<length;i++){
-            printf("%c",read_result);
+            printf("%c",read_result[i]);
         }
 
 
         if( length_read < 8 ){
+            memset(read_result, 0, sizeof(read_result)); 
             unsigned char msg[] = "we have received the data";
             write(fd, msg, sizeof(msg));
         }
