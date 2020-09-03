@@ -20,6 +20,15 @@ int main (int argc, char *argv[])
         perror(DEV_NAME);
         return -1;
     }
+
+    struct termios SerialPortSettings;  /* Create the structure                          */
+
+    tcgetattr(fd, &SerialPortSettings); /* Get the current attributes of the Serial port */
+
+    cfsetispeed(&SerialPortSettings,B115200); /* Set Read  Speed as 115200                      */
+    cfsetospeed(&SerialPortSettings,B115200); /* Set Write Speed as 115200                     */
+
+    SerialPortSettings.c_cc[VMIN] = 8; /* Read at least 10 characters */
     
     while(1){
 
@@ -28,7 +37,7 @@ int main (int argc, char *argv[])
             printf("read error \n");
             return -1;
         }else{
-            printf("%s", writeBuff);
+            printf("%s", readBuff);
             len = write(fd, writeBuff, sizeof(writeBuff));
             if (len < 0) {
                 printf("write data error \n");
