@@ -9,7 +9,8 @@
 #include <unistd.h> // write(), read(), close()
 
 // Open the serial port. Change device path as needed (currently set to an standard FTDI USB-UART cable type device)
-int serial_port = open("/dev/ttyAMA0", O_RDWR);
+int serial_port;
+serial_port = open("/dev/ttyAMA0", O_RDWR);
 
 // Create new termios struc, we call it 'tty' for convention
 struct termios tty;
@@ -77,4 +78,4 @@ if (num_bytes < 0) {
 // print it to the screen like this!)
 printf("Read %i bytes. Received message: %s", num_bytes, read_buf);
 
-close(serial_port)
+close(serial_port);
