@@ -130,10 +130,7 @@ int main()
         printf("Set Parity Error\n");  
         exit (0);  
     }  
-    char buf[] = "1234567890123456789012345678901234567890";
-    int n= write(fd,buf,strlen(buf));  
-    printf("字符串实际长度%zd \n", strlen(buf));
-    printf("成功写入%d \n", n);
+    char write_buff[] = "we have received the data";
     char read_buff[128];
     char read_result[512];   
     int lenTmp;    
@@ -148,6 +145,10 @@ int main()
             if(lenTmp < 8){
                 printf("%s\n",read_result );
                 memset(read_result, 0, sizeof(read_result));
+
+                int n= write(fd,write_buff,strlen(write_buff));  
+                printf("字符串实际长度%zd \n", strlen(write_buff));
+                printf("成功写入%d \n", n);
             }  
         }  
     }  
