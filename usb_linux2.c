@@ -52,9 +52,9 @@ int main(int argc, char **argv){
     char rcv_buf[100];
      char rcv_data[100];
     while (1) //循环读取数据
-    {
+    {   
         static int count = 0;
-        while(select(fd+1,&fs_read,NULL,NULL,&time)>0){
+        if(select(fd+1,&fs_read,NULL,NULL,&time)>0){
             len = read(fd,rcv_data,sizeof(rcv_data));
             if(len==8)
             {
@@ -67,11 +67,12 @@ int main(int argc, char **argv){
                 strncpy(rcv_buf+count,rcv_data,len);
                 count+=len;
                 printf("count=%d\n",count);
-                len=count;
-                count=0;
                 for(int i=0;i<count;i++){
                     printf("%c",rcv_buf[i]);
                 }
+                len=count;
+                count=0;
+                
             }  
         }   
         
