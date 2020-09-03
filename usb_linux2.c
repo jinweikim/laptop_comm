@@ -73,7 +73,7 @@ int main(int argc, char **argv){
                 count+=len;
                 printf("count=%d\n",count);
                 for(int i=0;i<count;i++){
-                    print("print buff\n")
+                    print("print buff\n");
                     printf("%c",rcv_buf[i]);
                 }
                 len=count;
