@@ -61,16 +61,19 @@ int main(int argc, char **argv){
             len = read(fd,rcv_data,sizeof(rcv_data));
             if(len==8)
             {
+                printf("len==8\n");
                 strncpy(rcv_buf+count,rcv_data,8);
                 count+=8;
 
             }
             if(len>0&&len<8)
             {
+                printf("len>0,<8\n");
                 strncpy(rcv_buf+count,rcv_data,len);
                 count+=len;
                 printf("count=%d\n",count);
                 for(int i=0;i<count;i++){
+                    print("print buff\n")
                     printf("%c",rcv_buf[i]);
                 }
                 len=count;
