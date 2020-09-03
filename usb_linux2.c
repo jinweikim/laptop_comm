@@ -69,11 +69,13 @@ int main(int argc, char **argv){
                 printf("count=%d\n",count);
                 len=count;
                 count=0;
-                return len;
+                for(int i=0;i<count;i++){
+                    printf("%c",rcv_buf[i]);
+                }
             }  
         }   
         
     }
-    //close(fd);  
-    // exit (0);
+    close(fd);  
+    exit (0);
 }
