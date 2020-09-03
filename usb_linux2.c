@@ -48,14 +48,29 @@ int main(int argc, char **argv){
     struct timeval time;
     time.tv_sec = 10;
     time.tv_usec = 0;
+    int len;
+    char rcv_buf[100];
+     char rcv_data[100];
     while (1) //循环读取数据
     {
+        static int count = 0;
         while(select(fd+1,&fs_read,NULL,NULL,&time)>0){
-            while((nread = read(fd, buff, 512))>0){ 
-                printf("\nLen %d\n",nread); 
-                buff[nread+1] = '\0';   
-                printf( "\n%s", buff);   
+            len = read(fd,rcv_data,sizeof(rcv_data));
+            if(len==8)
+            {
+                strncpy(rcv_buf+count,rcv_data,8);
+                count+=8;
+
             }
+            if(len>0&&len<8)
+            {
+                strncpy(rcv_buf+count,rcv_data,len);
+                count+=len;
+                printf("count=%d\n",count);
+                len=count;
+                count=0;
+                return len;
+            }  
         }   
         
     }
