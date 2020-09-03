@@ -12,7 +12,7 @@
 #include     <fcntl.h>      /*文件控制定义*/
 #include     <termios.h>    /*PPSIX 终端控制定义*/
 #include     <errno.h>      /*错误号定义*/
-
+#include     <string.h>
 
 #define FALSE  -1
 #define TRUE   0
