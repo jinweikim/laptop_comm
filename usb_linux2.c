@@ -134,15 +134,20 @@ int main()
     int n= write(fd,buf,strlen(buf));  
     printf("字符串实际长度%zd \n", strlen(buf));
     printf("成功写入%d \n", n);
-    char buff[512];   
+    char readBuff[128];
+    char read_result[512];   
     int nread;    
     while(1)  
     {  
-        if((nread = read(fd, buff, 512))>0)  
+        if((lenTmp = read(fd, readBuff, 512))>0)  
         {  
-            printf("Len: %d:",nread);  
-            buff[nread] = '\0';  
-            printf("%s \n",buff);  
+            printf("Len: %d:",lenTmp);  
+            buff[lenTmp] = '\0';  
+            printf("%s \n",readBuff);
+            strcat(read_result,readBuff);
+            if(lenTmp < 8){
+                memset(read_result, 0, sizeof(read_result));
+            }  
         }  
     }  
     close(fd);  
