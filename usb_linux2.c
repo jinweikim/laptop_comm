@@ -33,8 +33,10 @@ int main(int argc, char **argv){
     int nread;
     char buff[512];
     char *dev  = "/dev/ttyAMA0"; //串口二
+    printf("ready for open\n");
     fd = OpenDev(dev);
-    struct termios   Opt;
+    printf("opened\n");
+    struct termios Opt;
     tcgetattr(fd, &Opt);
     cfsetispeed(&Opt, B115200);  
     cfsetospeed(&Opt, B115200);  
@@ -50,7 +52,8 @@ int main(int argc, char **argv){
     time.tv_usec = 0;
     int len;
     char rcv_buf[100];
-     char rcv_data[100];
+    char rcv_data[100];
+    printf("before while\n");
     while (1) //循环读取数据
     {   
         static int count = 0;
