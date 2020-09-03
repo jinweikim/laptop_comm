@@ -1,88 +1,150 @@
-/**********************************************************************
-代码说明：使用串口二测试的，发送的数据是字符，
-但是没有发送字符串结束符号，所以接收到后，后面加上了结束符号。
-我测试使用的是单片机发送数据到第二个串口，测试通过。
-**********************************************************************/
-
-#include     <stdio.h>      /*标准输入输出定义*/
-#include     <stdlib.h>     /*标准函数库定义*/
-#include     <unistd.h>     /*Unix 标准函数定义*/
-#include     <sys/types.h>  
-#include     <sys/stat.h>   
-#include     <fcntl.h>      /*文件控制定义*/
-#include     <termios.h>    /*PPSIX 终端控制定义*/
-#include     <errno.h>      /*错误号定义*/
-#include     <string.h>
-
-#define FALSE  -1
-#define TRUE   0
-/*********************************************************************/
-int OpenDev(char *Dev)
-{
-    int fd = open( Dev, O_RDWR );         //| O_NOCTTY | O_NDELAY   
-    if (-1 == fd)   
-    {           
-        perror("Can't Open Serial Port");
-        return -1;      
-    }   
-    else    
-        return fd;
-}
-int main(int argc, char **argv){
-    int fd;
-    int nread;
-    char buff[512];
-    char *dev  = "/dev/ttyAMA0"; //串口二
-    printf("ready for open\n");
-    fd = OpenDev(dev);
-    printf("opened\n");
-    struct termios Opt;
-    tcgetattr(fd, &Opt);
-    cfsetispeed(&Opt, B115200);  
-    cfsetospeed(&Opt, B115200);  
-    // if (set_Parity(fd,8,1,'N') == FALSE)  {
-    //     printf("Set Parity Error\n");
-    //     exit (0);
-    // }
-    fd_set fs_read;
-    FD_ZERO(&fs_read);
-    FD_SET(fd,&fs_read);
-    struct timeval time;
-    time.tv_sec = 10;
-    time.tv_usec = 0;
-    int len;
-    char rcv_buf[100];
-    char rcv_data[100];
-    printf("before while\n");
-    while (1) //循环读取数据
-    {   
-        static int count = 0;
-        if(select(fd+1,&fs_read,NULL,NULL,&time)>0){
-            len = read(fd,rcv_data,sizeof(rcv_data));
-            if(len==8)
-            {
-                printf("len==8\n");
-                strncpy(rcv_buf+count,rcv_data,8);
-                count+=8;
-
-            }
-            if(len>0&&len<8)
-            {
-                printf("len>0,<8\n");
-                strncpy(rcv_buf+count,rcv_data,len);
-                count+=len;
-                printf("count=%d\n",count);
-                for(int i=0;i<count;i++){
-                    //printf("print buff\n");
-                    printf("%c",rcv_buf[i]);
-                }
-                len=count;
-                count=0;
-                
-            }  
-        }   
-        
-    }
-    close(fd);  
-    exit (0);
+#include<stdio.h>  
+#include<stdlib.h>  
+#include<string.h>  
+#include<unistd.h>  
+#include<sys/types.h>  
+#include<sys/stat.h>  
+#include<fcntl.h>  
+#include<termios.h>  
+#include<errno.h>  
+ 
+#define FALSE -1  
+#define TRUE 0  
+ 
+int speed_arr[] = { B38400, B19200, B9600, B4800, B2400, B1200, B300,B38400, B19200, B9600, B4800, B2400, B1200, B300, };  
+int name_arr[] =  {  38400,  19200,  9600,  4800,  2400,  1200,  300, 38400,  19200,  9600,  4800,  2400,  1200,  300, };  
+ 
+void set_speed(int fd, int speed)
+{  
+    int   i;   
+    int   status;   
+    struct termios   Opt;  
+    tcgetattr(fd, &Opt);   
+    for ( i= 0;  i < sizeof(speed_arr) / sizeof(int);  i++) 
+    {   
+        if  (speed == name_arr[i]) 
+        {       
+            tcflush(fd, TCIOFLUSH);       
+            cfsetispeed(&Opt, speed_arr[i]);    
+            cfsetospeed(&Opt, speed_arr[i]);     
+            status = tcsetattr(fd, TCSANOW, &Opt);    
+            if  (status != 0) 
+            {          
+                perror("tcsetattr fd1");    
+                return;       
+            }      
+            tcflush(fd,TCIOFLUSH);     
+        }    
+    }  
+}  
+ 
+int set_Parity(int fd,int databits,int stopbits,int parity)  
+{   
+    struct termios options;   
+    if  ( tcgetattr( fd,&options)  !=  0) 
+    {   
+        perror("SetupSerial 1");       
+        return(FALSE);    
+    }  
+    options.c_cflag &= ~CSIZE;   
+    switch (databits)   
+    {     
+        case 7:       
+            options.c_cflag |= CS7;   
+            break;  
+        case 8:       
+            options.c_cflag |= CS8;  
+            break;     
+        default:      
+            fprintf(stderr,"Unsupported data size\n"); return (FALSE);    
+    }  
+    switch (parity)   
+    {     
+        case 'n':  
+        case 'N':      
+            options.c_cflag &= ~PARENB;   /* Clear parity enable */  
+            options.c_iflag &= ~INPCK;     /* Enable parity checking */   
+            break;    
+        case 'o':     
+        case 'O':       
+            options.c_cflag |= (PARODD | PARENB);   
+            options.c_iflag |= INPCK;             /* Disnable parity checking */   
+            break;    
+        case 'e':    
+        case 'E':     
+            options.c_cflag |= PARENB;     /* Enable parity */      
+            options.c_cflag &= ~PARODD;      
+            options.c_iflag |= INPCK;       /* Disnable parity checking */  
+            break;  
+        case 'S':   
+        case 's':  /*as no parity*/     
+            options.c_cflag &= ~PARENB;  
+            options.c_cflag &= ~CSTOPB;break;    
+        default:     
+            fprintf(stderr,"Unsupported parity\n");      
+            return (FALSE);    
+    }    
+    switch (stopbits)  
+    {     
+        case 1:      
+            options.c_cflag &= ~CSTOPB;    
+            break;    
+        case 2:      
+            options.c_cflag |= CSTOPB;    
+            break;  
+        default:      
+            fprintf(stderr,"Unsupported stop bits\n");    
+            return (FALSE);   
+    }   
+    /* Set input parity option */   
+    if (parity != 'n')     
+        options.c_iflag |= INPCK;   
+    tcflush(fd,TCIFLUSH);  
+    options.c_cc[VTIME] = 150;   
+    options.c_cc[VMIN] = 0; /* Update the options and do it NOW */  
+    if (tcsetattr(fd,TCSANOW,&options) != 0)     
+    {   
+        perror("SetupSerial 3");     
+        return (FALSE);    
+    }   
+    return (TRUE);    
+}  
+ 
+int main()  
+{  
+    int fd;  
+    fd = open("/dev/ttyAMA0",O_RDWR);  
+    if(fd == -1)  
+    {  
+        perror("serialport error\n");  
+    }  
+    else  
+    {  
+        printf("open ");  
+        printf("%s",ttyname(fd));  
+        printf(" succesfully\n");  
+    }  
+ 
+    set_speed(fd,115200);  
+    if (set_Parity(fd,8,1,'N') == FALSE)  {  
+        printf("Set Parity Error\n");  
+        exit (0);  
+    }  
+    char buf[] = "1234567890123456789012345678901234567890";
+    int n= write(fd,buf,strlen(buf));  
+    printf("字符串实际长度%zd \n", strlen(buf));
+    printf("成功写入%d \n", n);
+    char buff[512];   
+    int nread;    
+    while(1)  
+    {  
+        if((nread = read(fd, buff, 512))>0)  
+        {  
+            printf("Len: %d:",nread);  
+            buff[nread] = '\0';  
+            printf("%s \n",buff);  
+        }  
+    }  
+    close(fd);  
+    return 0;  
 }
