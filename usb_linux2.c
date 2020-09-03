@@ -1,50 +1,56 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <fcntl.h>
-#include <asm/termios.h>
- 
-#define DEV_NAME  "/dev/ttyAMA0"
- 
- 
-int main (int argc, char *argv[])
+/**********************************************************************
+代码说明：使用串口二测试的，发送的数据是字符，
+但是没有发送字符串结束符号，所以接收到后，后面加上了结束符号。
+我测试使用的是单片机发送数据到第二个串口，测试通过。
+**********************************************************************/
+
+#include     <stdio.h>      /*标准输入输出定义*/
+#include     <stdlib.h>     /*标准函数库定义*/
+#include     <unistd.h>     /*Unix 标准函数定义*/
+#include     <sys/types.h>  
+#include     <sys/stat.h>   
+#include     <fcntl.h>      /*文件控制定义*/
+#include     <termios.h>    /*PPSIX 终端控制定义*/
+#include     <errno.h>      /*错误号定义*/
+
+
+#define FALSE  -1
+#define TRUE   0
+/*********************************************************************/
+int OpenDev(char *Dev)
 {
+    int fd = open( Dev, O_RDWR );         //| O_NOCTTY | O_NDELAY   
+    if (-1 == fd)   
+    {           
+        perror("Can't Open Serial Port");
+        return -1;      
+    }   
+    else    
+        return fd;
+}
+int main(int argc, char **argv){
     int fd;
-    int len, i,ret;
-    char writeBuff[] = "we have received the message";
-    char readBuff[256];
-
- 
-    fd = open(DEV_NAME, O_RDWR | O_NOCTTY);
-    if(fd < 0) {
-        perror(DEV_NAME);
-        return -1;
-    }
-
-    struct termios SerialPortSettings;  /* Create the structure                          */
-
-    tcgetattr(fd, &SerialPortSettings); /* Get the current attributes of the Serial port */
-
-    cfsetispeed(&SerialPortSettings,B115200); /* Set Read  Speed as 115200                      */
-    cfsetospeed(&SerialPortSettings,B115200); /* Set Write Speed as 115200                     */
-
-    SerialPortSettings.c_cc[VMIN] = 8; /* Read at least 10 characters */
-    
-    while(1){
-
-        len = read(fd, readBuff, sizeof(readBuff));
-        if (len < 0) {
-            printf("read error \n");
-            return -1;
-        }else{
-            printf("%s", readBuff);
-            len = write(fd, writeBuff, sizeof(writeBuff));
-            if (len < 0) {
-                printf("write data error \n");
-            }
+    int nread;
+    char buff[512];
+    char *dev  = "/dev/ttyS1"; //串口二
+    fd = OpenDev(dev);
+    struct termios   Opt;
+    tcgetattr(fd, &Opt);
+    cfsetispeed(&Opt, B115200);  
+    cfsetospeed(&Opt, B115200);  
+    // if (set_Parity(fd,8,1,'N') == FALSE)  {
+    //     printf("Set Parity Error\n");
+    //     exit (0);
+    // }
+    while (1) //循环读取数据
+    {   
+        while((nread = read(fd, buff, 512))>0)
+        { 
+            printf("\nLen %d\n",nread); 
+            buff[nread+1] = '\0';   
+            printf( "\n%s", buff);   
         }
-        
     }
- 
-    return(0);
+    //close(fd);  
+    // exit (0);
 }
