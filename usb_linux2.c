@@ -32,7 +32,7 @@ int main(int argc, char **argv){
     int fd;
     int nread;
     char buff[512];
-    char *dev  = "/dev/ttyS1"; //串口二
+    char *dev  = "/dev/ttyAMA0"; //串口二
     fd = OpenDev(dev);
     struct termios   Opt;
     tcgetattr(fd, &Opt);
@@ -42,14 +42,22 @@ int main(int argc, char **argv){
     //     printf("Set Parity Error\n");
     //     exit (0);
     // }
+    fd_set fs_read;
+    FD_ZERO(&fs_read);
+    FD_SET(fd,&fs_read);
+    struct timeval time;
+    time.tv_sec = 10;
+    time.tv_usec = 0;
     while (1) //循环读取数据
-    {   
-        while((nread = read(fd, buff, 512))>0)
-        { 
-            printf("\nLen %d\n",nread); 
-            buff[nread+1] = '\0';   
-            printf( "\n%s", buff);   
-        }
+    {
+        while(select(fd+1,&fs_read,NULL,NULL,&time)>0){
+            while((nread = read(fd, buff, 512))>0){ 
+                printf("\nLen %d\n",nread); 
+                buff[nread+1] = '\0';   
+                printf( "\n%s", buff);   
+            }
+        }   
+        
     }
     //close(fd);  
     // exit (0);
