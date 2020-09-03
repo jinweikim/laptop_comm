@@ -136,13 +136,13 @@ int main()
     printf("成功写入%d \n", n);
     char readBuff[128];
     char read_result[512];   
-    int nread;    
+    int lenTmp;    
     while(1)  
     {  
         if((lenTmp = read(fd, readBuff, 512))>0)  
         {  
             printf("Len: %d:",lenTmp);  
-            buff[lenTmp] = '\0';  
+            readBuff[lenTmp] = '\0';  
             printf("%s \n",readBuff);
             strcat(read_result,readBuff);
             if(lenTmp < 8){
