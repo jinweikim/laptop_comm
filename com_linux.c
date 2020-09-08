@@ -1,79 +1,157 @@
-// C library headers
-#include <stdio.h>
-#include <string.h>
+#include<stdio.h>  
+#include<stdlib.h>  
+#include<string.h>  
+#include<unistd.h>  
+#include<sys/types.h>  
+#include<sys/stat.h>  
+#include<fcntl.h>  
+#include<termios.h>  
+#include<errno.h>  
+ 
+#define FALSE -1  
+#define TRUE 0  
+ 
+int speed_arr[] = { B38400, B19200, B9600, B4800, B2400, B1200, B300,B38400, B19200, B9600, B4800, B2400, B1200, B300, };  
+int name_arr[] =  {  38400,  19200,  9600,  4800,  2400,  1200,  300, 38400,  19200,  9600,  4800,  2400,  1200,  300, };  
+ 
+void set_speed(int fd, int speed)
+{  
+    int   i;   
+    int   status;   
+    struct termios   Opt;  
+    tcgetattr(fd, &Opt);   
+    for ( i= 0;  i < sizeof(speed_arr) / sizeof(int);  i++) 
+    {   
+        if  (speed == name_arr[i]) 
+        {       
+            tcflush(fd, TCIOFLUSH);       
+            cfsetispeed(&Opt, speed_arr[i]);    
+            cfsetospeed(&Opt, speed_arr[i]);     
+            status = tcsetattr(fd, TCSANOW, &Opt);    
+            if  (status != 0) 
+            {          
+                perror("tcsetattr fd1");    
+                return;       
+            }      
+            tcflush(fd,TCIOFLUSH);     
+        }    
+    }  
+}  
+ 
+int set_Parity(int fd,int databits,int stopbits,int parity)  
+{   
+    struct termios options;   
+    if  ( tcgetattr( fd,&options)  !=  0) 
+    {   
+        perror("SetupSerial 1");       
+        return(FALSE);    
+    }  
+    options.c_cflag &= ~CSIZE;   
+    switch (databits)   
+    {     
+        case 7:       
+            options.c_cflag |= CS7;   
+            break;  
+        case 8:       
+            options.c_cflag |= CS8;  
+            break;     
+        default:      
+            fprintf(stderr,"Unsupported data size\n"); return (FALSE);    
+    }  
+    switch (parity)   
+    {     
+        case 'n':  
+        case 'N':      
+            options.c_cflag &= ~PARENB;   /* Clear parity enable */  
+            options.c_iflag &= ~INPCK;     /* Enable parity checking */   
+            break;    
+        case 'o':     
+        case 'O':       
+            options.c_cflag |= (PARODD | PARENB);   
+            options.c_iflag |= INPCK;             /* Disnable parity checking */   
+            break;    
+        case 'e':    
+        case 'E':     
+            options.c_cflag |= PARENB;     /* Enable parity */      
+            options.c_cflag &= ~PARODD;      
+            options.c_iflag |= INPCK;       /* Disnable parity checking */  
+            break;  
+        case 'S':   
+        case 's':  /*as no parity*/     
+            options.c_cflag &= ~PARENB;  
+            options.c_cflag &= ~CSTOPB;break;    
+        default:     
+            fprintf(stderr,"Unsupported parity\n");      
+            return (FALSE);    
+    }    
+    switch (stopbits)  
+    {     
+        case 1:      
+            options.c_cflag &= ~CSTOPB;    
+            break;    
+        case 2:      
+            options.c_cflag |= CSTOPB;    
+            break;  
+        default:      
+            fprintf(stderr,"Unsupported stop bits\n");    
+            return (FALSE);   
+    }   
+    /* Set input parity option */   
+    if (parity != 'n')     
+        options.c_iflag |= INPCK;   
+    tcflush(fd,TCIFLUSH);  
+    options.c_cc[VTIME] = 150;   
+    options.c_cc[VMIN] = 0; /* Update the options and do it NOW */  
+    if (tcsetattr(fd,TCSANOW,&options) != 0)     
+    {   
+        perror("SetupSerial 3");     
+        return (FALSE);    
+    }   
+    return (TRUE);    
+}  
+ 
+int main()  
+{  
+    int fd;  
+    fd = open("/dev/ttySC0",O_RDWR);  
+    if(fd == -1)  
+    {  
+        perror("serialport error\n");  
+    }  
+    else  
+    {  
+        printf("open ");  
+        printf("%s",ttyname(fd));  
+        printf(" succesfully\n");  
+    }  
+ 
+    set_speed(fd,115200);  
+    if (set_Parity(fd,8,1,'N') == FALSE)  {  
+        printf("Set Parity Error\n");  
+        exit (0);  
+    }  
+    char write_buff[] = "we have received the data";
+    char read_buff[128];
+    char read_result[512];   
+    int lenTmp;    
+    while(1)  
+    {  
+        if((lenTmp = read(fd, read_buff, 512))>0)  
+        {  
+            printf("Len: %d:",lenTmp);  
+            read_buff[lenTmp] = '\0';  
+            printf("%s \n",read_buff);
+            strcat(read_result,read_buff);
+            if(lenTmp < 8){
+                printf("%s\n",read_result );
+                memset(read_result, 0, sizeof(read_result));
 
-// Linux headers
-#include <fcntl.h> // Contains file controls like O_RDWR
-#include <errno.h> // Error integer and strerror() function
-#include <termios.h> // Contains POSIX terminal control definitions
-#include <unistd.h> // write(), read(), close()
-
-// Open the serial port. Change device path as needed (currently set to an standard FTDI USB-UART cable type device)
-int serial_port = open("/dev/ttyUSB0", O_RDWR);
-
-// Create new termios struc, we call it 'tty' for convention
-struct termios tty;
-
-// Read in existing settings, and handle any error
-if(tcgetattr(serial_port, &tty) != 0) {
-    printf("Error %i from tcgetattr: %s\n", errno, strerror(errno));
+                int n= write(fd,write_buff,strlen(write_buff));  
+                printf("字符串实际长度%zd \n", strlen(write_buff));
+                printf("成功写入%d \n", n);
+            }  
+        }  
+    }  
+    close(fd);  
+    return 0;  
 }
-
-tty.c_cflag &= ~PARENB; // Clear parity bit, disabling parity (most common)
-tty.c_cflag &= ~CSTOPB; // Clear stop field, only one stop bit used in communication (most common)
-tty.c_cflag |= CS8; // 8 bits per byte (most common)
-tty.c_cflag &= ~CRTSCTS; // Disable RTS/CTS hardware flow control (most common)
-tty.c_cflag |= CREAD | CLOCAL; // Turn on READ & ignore ctrl lines (CLOCAL = 1)
-
-tty.c_lflag &= ~ICANON;
-tty.c_lflag &= ~ECHO; // Disable echo
-tty.c_lflag &= ~ECHOE; // Disable erasure
-tty.c_lflag &= ~ECHONL; // Disable new-line echo
-tty.c_lflag &= ~ISIG; // Disable interpretation of INTR, QUIT and SUSP
-tty.c_iflag &= ~(IXON | IXOFF | IXANY); // Turn off s/w flow ctrl
-tty.c_iflag &= ~(IGNBRK|BRKINT|PARMRK|ISTRIP|INLCR|IGNCR|ICRNL); // Disable any special handling of received bytes
-
-tty.c_oflag &= ~OPOST; // Prevent special interpretation of output bytes (e.g. newline chars)
-tty.c_oflag &= ~ONLCR; // Prevent conversion of newline to carriage return/line feed
-// tty.c_oflag &= ~OXTABS; // Prevent conversion of tabs to spaces (NOT PRESENT ON LINUX)
-// tty.c_oflag &= ~ONOEOT; // Prevent removal of C-d chars (0x004) in output (NOT PRESENT ON LINUX)
-
-tty.c_cc[VTIME] = 10;    // Wait for up to 1s (10 deciseconds), returning as soon as any data is received.
-tty.c_cc[VMIN] = 0;
-
-// Set in/out baud rate to be 9600
-cfsetispeed(&tty, B9600);
-cfsetospeed(&tty, B9600);
-
-// Save tty settings, also checking for error
-if (tcsetattr(serial_port, TCSANOW, &tty) != 0) {
-    printf("Error %i from tcsetattr: %s\n", errno, strerror(errno));
-}
-
-// Write to serial port
-unsigned char msg[] = { 'H', 'e', 'l', 'l', 'o', '\r' };
-write(serial_port, "Hello, world!", sizeof(msg));
-
-// Allocate memory for read buffer, set size according to your needs
-char read_buf [256];
-
-// Normally you wouldn't do this memset() call, but since we will just receive
-// ASCII data for this example, we'll set everything to 0 so we can
-// call printf() easily.
-memset(&read_buf, '\0', sizeof(read_buf);
-
-// Read bytes. The behaviour of read() (e.g. does it block?,
-// how long does it block for?) depends on the configuration
-// settings above, specifically VMIN and VTIME
-int num_bytes = read(serial_port, &read_buf, sizeof(read_buf));
-
-// n is the number of bytes read. n may be 0 if no bytes were received, and can also be -1 to signal an error.
-if (num_bytes < 0) {
-    printf("Error reading: %s", strerror(errno));
-}
-
-// Here we assume we received ASCII data, but you might be sending raw bytes (in that case, don't try and
-// print it to the screen like this!)
-printf("Read %i bytes. Received message: %s", num_bytes, read_buf);
-
-close(serial_port)
