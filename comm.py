@@ -1,3 +1,4 @@
+# coding=utf-8 
 import serial #导入模块
 try:
 
