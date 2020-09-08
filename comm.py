@@ -27,15 +27,15 @@ try:
   #循环接收数据，此为死循环，可用线程实现
   while True:
          if ser.in_waiting:
-             str=ser.read(ser.in_waiting )
+             str=ser.read()
              if(str=="exit"):#退出标志
                  break
              else:
-               print("message：",str)
+               print("message:",str)
 
   print("---------------")
   ser.close()#关闭串口
 
 
 except Exception as e:
-    print("---exception:---：",e)
+    print("---exception:---:",e)
