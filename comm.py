@@ -10,7 +10,7 @@ try:
   timex=5
   # 打开串口，并得到串口对象
   ser=serial.Serial(portx,bps,timeout=timex)
-  print("串口详情参数：", ser)
+  # print("comm information：", ser)
 
 
 
@@ -31,11 +31,11 @@ try:
              if(str=="exit"):#退出标志
                  break
              else:
-               print("收到数据：",str)
+               print("message：",str)
 
   print("---------------")
   ser.close()#关闭串口
 
 
 except Exception as e:
-    print("---异常---：",e)
+    print("---exception:---：",e)
