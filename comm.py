@@ -27,7 +27,7 @@ try:
   #循环接收数据，此为死循环，可用线程实现
   while True:
          if ser.in_waiting:
-             str=ser.readline()
+             str=ser.read_all()
              if(str=="exit"):#退出标志
                  break
              else:
